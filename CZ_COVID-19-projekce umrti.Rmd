@@ -1,7 +1,7 @@
 ---
 title: "CZ_COVID-19 Projekce umrti"
 author: "Philip Ridgill"
-date: "21/10/2020"
+date: "23/10/2020"
 output: 
   html_document:
     df_print: paged
@@ -35,8 +35,8 @@ library(RcppRoll)
 
 setwd("C:/Users/phili/OneDrive/Git/CZ_coronavirus_expected_deaths") # set to own WD
 
-date_today <- as.Date("20/10/2020", format = "%d/%m/%Y")
-date_model <- as.Date("20/10/2020", format = "%d/%m/%Y")
+date_today <- today(tzone = "CET") - 1
+date_model <- as.Date("23/10/2020", format = "%d/%m/%Y")
 
 CZ_dates_future <- read.csv("dates.csv") # required csv, download to make it work
 
@@ -113,7 +113,7 @@ CZ_positive <- CZ_positive %>%
          age_category = if_else(vek < 20, "0-19", if_else(vek < 40 & vek >= 20, "20-39", if_else(vek < 50 & vek >= 40, "40-49", if_else(vek < 60 & vek >= 50, "50-59", if_else(vek < 70 & vek >= 60, "60-69", if_else(vek < 80 & vek >= 70, "70-79", if_else(vek < 90 & vek >= 80, "80-89", if_else(vek >= 90, "90+", "error")))))))))
 
 
-## Postpone dates of positive cases to match-up the cases and deaths in order to be able to caluclate fatality in past data
+##### Postpone dates of positive cases to match-up the cases and deaths in order to be able to caluclate fatality in past data #####
 
 
 
@@ -160,6 +160,9 @@ CZ_positive_dead_age_category[is.na(CZ_positive_dead_age_category)] <- 0
 CZ_fatality <- CZ_positive_dead_age_category %>%
   select(-count_cases, -count_dead)
 
+###### enf of fatality calculation ######
+
+
 ##### get dates #####
 
 CZ_dates <- CZ_cases %>%
@@ -189,7 +192,7 @@ CZ_dates_age_categories_future <- CZ_dates_future %>%
 
 
 
-##### Expected deaths time series #####
+##### Expected deaths time series - testing model #####
 
 CZ_Positive_expected_death <- CZ_positive %>%
   left_join(CZ_death_timing, by = c("age_category")) %>%
@@ -203,7 +206,7 @@ CZ_expected_deaths_timeline <- CZ_Positive_expected_death %>%
   arrange(date_expected_death) %>%
   mutate(expected_deaths_7 = rollapply(expected_deaths, width=7, FUN=function(x) mean(x, na.rm=TRUE), by=1,  by.column=TRUE, partial=TRUE, fill=NA, align="right"))
 
-## By Age category
+## Expected deaths by Age category
 
 CZ_expected_deaths_timeline_by_age <- CZ_Positive_expected_death %>%
   group_by(date_expected_death, age_category) %>%
@@ -216,7 +219,9 @@ CZ_expected_deaths_timeline_by_age <- CZ_dates_age_categories %>%
   arrange(age_category) %>%
   group_by(age_category) %>%
   mutate(expected_deaths_7 = rollapply(expected_deaths, width=7, FUN=function(x) mean(x, na.rm=TRUE), by=1,  by.column=TRUE, partial=TRUE, fill=NA, align="right"))
-  
+
+## compute deaths by age to backtest model
+
 CZ_deaths_by_age <- CZ_dead %>%
   group_by(date, age_category) %>%
   summarise(deaths = n()) %>%
@@ -230,7 +235,9 @@ CZ_deaths_by_age <- CZ_dates_age_categories %>%
   group_by(age_category) %>%
   mutate(deaths_7 = rollapply(deaths, width=7, FUN=function(x) mean(x, na.rm=TRUE), by=1,  by.column=TRUE, partial=TRUE, fill=NA, align="right"))
 
-### Expected deaths with project cases into the future
+
+
+##### Expected deaths with projected cases into the future #####
 
 ## Predict R value of future cases growth per scenario per week
 
@@ -238,6 +245,8 @@ CZ_expected_deaths_timeline_projected2 <- CZ_positive %>%
   group_by(date, age_category) %>%
   summarise(cases = as.numeric(n())) %>%
   ungroup()
+
+number_of_scenarios <- 4
 
 CZ_cases_by_age_projected <- CZ_dates_age_categories_future %>%
   left_join(CZ_expected_deaths_timeline_projected2, by = c("date", "age_category")) %>%
@@ -293,60 +302,60 @@ CZ_cases_by_age_projected <- CZ_dates_age_categories_future %>%
   gather(key = "Scenario", value = "R", R_1, R_2, R_3, R_4) %>%
   group_by(age_category) %>%
   arrange(date) %>%
-    mutate(cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7), 
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7), 
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
-         cases_7 = if_else(date > date_model, lag(cases_7, 4) * R, cases_7),
+    mutate(cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7), 
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7), 
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
          cases = if_else(date > date_model, cases_7, cases))  %>%
   ungroup() %>%
   mutate(Scenario = if_else(Scenario == "R_1", "Measures not working, no further action", if_else(Scenario == "R_2", "Lockdown in two weeks", if_else(Scenario == "R_3", "Lockdown now", "Lockdown now, but lifted in 2 weeks"))))
@@ -366,10 +375,13 @@ CZ_expected_deaths_timeline_projected <- CZ_deaths_by_age_projected %>%
   mutate(expected_deaths_7 = rollapply(expected_deaths, width=7, FUN=function(x) mean(x, na.rm=TRUE), by=1,  by.column=TRUE, partial=TRUE, fill=NA, align="right")) %>%
   filter() # end projection before run out of cases? - Do in charts instead
 
+##### end of long-term projections of deaths #####
 
 ```
 
 # Long-term scenarios of daily deaths
+
+## interactive chart
 
 ```{r, warning=FALSE}
 CZ_expected_deaths_timeline_projected_end <- CZ_expected_deaths_timeline_projected %>%
@@ -407,6 +419,8 @@ CZ_expected_deaths_timeline_projected %>%
 )
 ```
 
+## non-interactive version
+
 ```{r, warning=FALSE}
 CZ_expected_deaths_timeline_projected_end <- CZ_expected_deaths_timeline_projected %>%
   filter(date_expected_death == as.Date("30/11/2020", format = "%d/%m/%Y"))
@@ -435,4 +449,60 @@ CZ_expected_deaths_timeline_projected %>%
   guides(color=guide_legend(nrow=2,byrow=TRUE)) +
   labs(y = "Deaths (7 day rolling average)", x = "", title = "Long-term scenarios of expected daily deaths", subtitle = "Based on past data and 4 scenarios of growth in cases")
 
+```
+
+# Additional checks
+
+## fatality used for model
+
+```{r, warning=FALSE}
+CZ_fatality %>% 
+  ggplot(aes(x = age_category, y = fatality, fill = -fatality)) +
+  geom_col() +
+  scale_y_continuous(labels = percent_format()) +
+  theme_light() +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        legend.position = "none")
+```
+
+
+## Expected Deaths based on todays cases
+
+```{r, warning=FALSE}
+
+CZ_expected_deaths_timeline_summary <- CZ_expected_deaths_timeline %>%
+  mutate(month = month(date_expected_death)) %>%
+  group_by(month) %>%
+  summarise(expected_deaths = sum(expected_deaths))
+
+CZ_expected_deaths_timeline %>% 
+  left_join(CZ_all, by = c("date_expected_death" = "date")) %>%
+  ggplot(aes(x = date_expected_death, y = expected_deaths_7)) +
+  geom_line(col = "brown", size = 1) +
+  #geom_line(aes(y = expected_deaths), col = "grey10") +
+  geom_line(aes(y = new_deaths_7), col = "black", size = 1) +
+  geom_vline(xintercept = date_today, col = "red", linetype = "dashed") +
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", date_labels="%B") +
+  theme_light() +
+  theme(panel.grid.minor = element_blank()) +
+  labs(y = "Deaths (7 day rolling average)", x = "", title = "Expected daily deaths (brown) vs actual deaths (black)", subtitle = "Based solely on cases registered as of today")
+```
+
+## Expected Deaths by age category
+
+```{r, warning=FALSE}
+CZ_expected_deaths_timeline_by_age %>% 
+  filter(date < date_today - 7) %>%
+  left_join(CZ_deaths_by_age, by = c("date", "age_category")) %>%
+  ggplot(aes(x = date, y = expected_deaths_7, group = age_category)) +
+  geom_line(col = "brown") +
+  #geom_line(aes(y = expected_deaths), col = "grey10") +
+  geom_line(aes(y = deaths_7), col = "black") +
+  geom_vline(xintercept = date_today, col = "red", linetype = "dashed") +
+  theme_light() + 
+  facet_wrap(~ age_category) +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank()) +
+  labs(y = "deaths (7 day rolling average)", x = "date", title = "Expected deaths (brown) vs actual deaths (black)", subtitle = "As of 7 days ago, due to reporting delays")
 ```

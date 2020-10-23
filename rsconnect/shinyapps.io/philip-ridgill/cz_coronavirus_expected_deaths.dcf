@@ -1,0 +1,10 @@
+name: cz_coronavirus_expected_deaths
+title:
+username:
+account: philip-ridgill
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3088696
+bundleId: 3778676
+url: https://philip-ridgill.shinyapps.io/cz_coronavirus_expected_deaths/
+when: 1603581081.95792
