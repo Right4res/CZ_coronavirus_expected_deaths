@@ -1,7 +1,7 @@
 ---
 title: "CZ_COVID-19 Projekce umrti"
 author: "Philip Ridgill"
-date: "234/10/2020"
+date: "24/10/2020"
 output: 
   html_document:
     df_print: paged
