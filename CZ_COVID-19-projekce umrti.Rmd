@@ -35,8 +35,10 @@ library(RcppRoll)
 
 setwd("C:/Users/phili/OneDrive/Git/CZ_coronavirus_expected_deaths") # set to own WD
 
-date_today <- today(tzone = "CET") - 1
+
+date_today <- today(tzone = "GMT") - 1
 date_model <- as.Date("23/10/2020", format = "%d/%m/%Y")
+
 
 CZ_dates_future <- read.csv("dates.csv") # required csv, download to make it work
 
