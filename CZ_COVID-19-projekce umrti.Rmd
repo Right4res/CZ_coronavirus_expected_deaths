@@ -358,6 +358,18 @@ CZ_cases_by_age_projected <- CZ_dates_age_categories_future %>%
          cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
          cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
          cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
+         cases_7 = if_else(date > date_model, lag(cases_7, number_of_scenarios) * R, cases_7),
          cases = if_else(date > date_model, cases_7, cases))  %>%
   ungroup() %>%
   mutate(Scenario = if_else(Scenario == "R_1", "Measures not working, no further action", if_else(Scenario == "R_2", "Lockdown in two weeks", if_else(Scenario == "R_3", "Lockdown now", "Lockdown now, but lifted in 2 weeks"))))
