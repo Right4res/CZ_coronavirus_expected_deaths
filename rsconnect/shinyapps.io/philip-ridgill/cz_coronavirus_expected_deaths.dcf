@@ -5,6 +5,6 @@ account: philip-ridgill
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 3088696
-bundleId: 3778676
+bundleId: 3785650
 url: https://philip-ridgill.shinyapps.io/cz_coronavirus_expected_deaths/
-when: 1603581081.95792
+when: 1603759169.11391
