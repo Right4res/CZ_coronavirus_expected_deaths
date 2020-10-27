@@ -8,6 +8,7 @@ library(zoo)
 library(plotly)
 library(lubridate)
 library(RcppRoll)
+library(ggthemes)
 library(tidyverse)
 
 ui <- fluidPage(
@@ -43,8 +44,11 @@ ui <- fluidPage(
                    value = today(tzone = "GMT") + 50)),
   # column(3,
   #        actionButton(inputId = "refresh", "Run simulation")),
-  plotOutput("chart", width = "80%",
+  plotOutput("chart", 
+             hover = "plot_hover",
+             width = "95%",
              height = "800px")
+  # , tableOutput('table')
 )
 
 
@@ -265,11 +269,9 @@ server <- function(input, output, session) {
   
   
   output$chart <- renderPlot({
-    date_today <- today(tzone = "GMT") - 1
     date_model <- input$date_model_start
     date_model_end <- input$date_model_end
-    week_now <- week(date_today)
-    
+
     
     CZ_cases_by_age_projected <- CZ_dates_age_categories_future %>%
       left_join(CZ_expected_deaths_timeline_projected2, by = c("date", "age_category")) %>%
@@ -451,18 +453,19 @@ server <- function(input, output, session) {
     ##### start charts #####
     
     CZ_expected_deaths_timeline_projected %>% 
-      left_join(CZ_all, by = c("date_expected_death" = "date")) %>%
+      left_join(CZ_all %>% filter(date <= date_today-1), by = c("date_expected_death" = "date")) %>%
       filter(date_expected_death <= input$date_model_end) %>%
       ggplot(aes(x = date_expected_death, y = round(expected_deaths_7,2), col = Scenario)) +
       geom_line(size = 1) +
       geom_text_repel(aes(label = round(expected_deaths_7,0), colour = Scenario), data = CZ_expected_deaths_timeline_projected_end, size = 3, vjust = 0, hjust = -0.5) +
       geom_line(aes(y = new_deaths_7), col = "black", size = 1) +
-      geom_vline(xintercept = date_model, col = "red", linetype = "dashed") +
+      geom_vline(xintercept = date_model-1, col = "red", linetype = "dashed") +
       scale_color_manual(values = c("#4DAF4A", "#377EB8", "purple", "#E41A1C", "darkorange")) +
       scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", date_labels="%b") +
-      theme_classic() +
+      theme_bw() +
       coord_cartesian(xlim = c(date_model - 30, date_model_end + 5)) +
-      theme(panel.grid.minor = element_blank(),
+      theme(panel.grid.minor.x = element_blank(),
+            panel.grid.major = element_line(colour = "grey85"),
             legend.position = "bottom",
             axis.text = element_text(size = 13),
             title = element_text(size = 25),
@@ -470,8 +473,14 @@ server <- function(input, output, session) {
             legend.text = element_text(size = 17)) +
       guides(color=guide_legend(nrow=2,byrow=TRUE)) +
       labs(y = "Úmrtí (7 denní klouzavý průměr)", x = "", title = "Dlouhodobé scénaře denních úmrtí", 
-           subtitle = "Založeno na současných datech a zvolených scénářů", col = "Scénář")
+           subtitle = "Založeno na současných datech a zvolených scénářích", col = "Scénář")
+    
   })
+  
+  
+  
+  # output$table <- renderDataTable(CZ_expected_deaths_timeline_projected_summary)
+  
   
   # observeEvent(input$refresh, {
   #   reset(CZ_expected_deaths_timeline_projected)
